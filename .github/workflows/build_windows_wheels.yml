@@ -31,9 +31,9 @@ jobs:
       - name: Install Conda dependencies
         run: |
           conda install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
-          pip install cython  # Redundant but ensures it's available
-          python -m cython
-          python cython --version
+          # pip install cython  # Redundant but ensures it's available
+          # python -m cython
+          # python cython --version
         
       - name: Generate C++ Files
         run: |
