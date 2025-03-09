@@ -31,6 +31,13 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: strict
 
+    - name: Create and activate conda environment
+      shell: bash
+      run: |
+        conda create -n build-env python=${{ matrix.python-version }} -y
+        echo "conda activate build-env" >> $GITHUB_ENV
+        source $GITHUB_ENV
+
     - name: Add retry script
       shell: bash
       run: |
