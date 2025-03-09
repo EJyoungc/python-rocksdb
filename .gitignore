@@ -1,0 +1,13 @@
+# Cython/Build artifacts
+*.pyc
+*.so
+*.pyd
+*.c
+build/
+dist/
+*.egg-info/
+wheelhouse/
+
+# Conda
+.env/
+.conda/
