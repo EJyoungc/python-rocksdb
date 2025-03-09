@@ -18,7 +18,7 @@ if os.name == "nt":
         library_dirs = [r"C:\RocksDB\lib"]
 
     # MSVC uses /std:c++14 (if supported)
-    extra_compile_args = ["/std:c++14"]
+    extra_compile_args = ["-std:c++14"]
     libraries = ["rocksdb"]  # Add other required libraries (e.g. snappy, lz4) if needed
 else:
     # Non-Windows (Linux, macOS) settings
