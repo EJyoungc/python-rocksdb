@@ -7,18 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  build_wheels:
-    name: Build Wheel
+  create_conda_env:
+    name: Create Conda Environment
     runs-on: windows-latest
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        python-version: 
-          - "3.8"
-          # - "3.9"
-          # - "3.10"
-          # - "3.11"
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -27,46 +18,58 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.11"
         channels: conda-forge,defaults
         channel-priority: strict
+
+    - name: Initialize conda
+      shell: bash
+      run: |
+        eval "$(conda shell.bash hook)"
 
     - name: Create and activate conda environment
       shell: bash
       run: |
-        conda create -n build-env python=${{ matrix.python-version }} -y
-        echo "source activate build-env" >> $GITHUB_ENV
-        source $GITHUB_ENV
+        conda create -n build-env python=3.11 -y
+        source "$(conda info --base)/etc/profile.d/conda.sh"
+        conda activate build-env
+
+  build_wheels:
+    name: Build Wheel
+    runs-on: windows-latest
+    needs: create_conda_env
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: "3.11"
+        channels: conda-forge,defaults
+        channel-priority: strict
+
+    - name: Initialize conda
+      shell: bash
+      run: |
+        eval "$(conda shell.bash hook)"
+
+    - name: Activate conda environment
+      shell: bash
+      run: |
+        source "$(conda info --base)/etc/profile.d/conda.sh"
+        conda activate build-env
 
     - name: Install Conda dependencies
       shell: bash
       run: |
-        for ((i=1; i<=3; i++)); do
-          conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
+        conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
     - name: Verify RocksDB installation
       shell: bash
       run: |
-        for ((i=1; i<=3; i++)); do
-          dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
+        dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib
 
     - name: Build wheel
       shell: bash
@@ -76,54 +79,14 @@ jobs:
         CFLAGS: "-I%CONDA_PREFIX%/Library/include /D_WIN32_WINNT=0x0601"
         CXXFLAGS: "-I%CONDA_PREFIX%/Library/include /EHsc /D_WIN32_WINNT=0x0601"
       run: |
-        for ((i=1; i<=3; i++)); do
-          conda run -n build-env python setup.py build_ext --inplace && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
-        for ((i=1; i<=3; i++)); do
-          conda run -n build-env python setup.py bdist_wheel && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
+        conda run -n build-env python setup.py build_ext --inplace
+        conda run -n build-env python setup.py bdist_wheel
 
     - name: Repair wheel (if needed)
       shell: bash
       run: |
-        for ((i=1; i<=3; i++)); do
-          pip install delvewheel && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
-        for ((i=1; i<=3; i++)); do
-          delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin && break || {
-            if [[ $i -lt 3 ]]; then
-              echo "Command failed. Retrying in 10 seconds..."
-              sleep 10;
-            else
-              echo "Command failed after $i attempts."
-              exit 1;
-            fi
-          }
-        done
+        pip install delvewheel
+        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
