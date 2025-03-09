@@ -28,10 +28,13 @@ jobs:
         run: conda activate build-env
       - name: Generate C++ Files
         run: |
-          cython rocksdb/rocksdb.pyx  # Ensure rocksdb.cpp is created
+          python -m cython rocksdb/rocksdb.pyx  # Ensure rocksdb.cpp is created
 
       - name: Install Conda dependencies
         run: conda install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+        run: pip install cython  # Redundant but ensures it's available
+        run: python -m cython
+        run: python cython --version
 
       - name: Build wheel
         run: |
