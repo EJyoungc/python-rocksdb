@@ -31,6 +31,9 @@ jobs:
       - name: Install Conda dependencies
         run: |
           conda install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+          conda install -n build-env libgcc
+          conda install -n build-env m2-msys2
+          
           pip install cython  # Redundant but ensures it's available
           # python -m cython
           # python cython --version
@@ -45,6 +48,7 @@ jobs:
         run: |
           dir rocksdb
           mv rocksdb/rocksdb.c rocksdb/rocksdb.cpp
+          dir rocksdb
 
 
       - name: Build wheel
