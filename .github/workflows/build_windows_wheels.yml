@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  create_conda_env:
-    name: Create Conda Environment
+  set_conda_path:
+    name: Set Conda Path
     runs-on: windows-latest
     steps:
     - name: Checkout code
@@ -22,17 +22,26 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: strict
 
-    - name: Initialize conda
-      shell: bash
+    - name: Set Conda Path
+      shell: cmd
       run: |
-        eval "$(conda shell.bash hook)"
+        @echo on
+        set "CONDA_PATH=%CONDA%"
+
+  create_conda_env:
+    name: Create Conda Environment
+    runs-on: windows-latest
+    needs: set_conda_path
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Create and activate conda environment
-      shell: bash
+      shell: cmd
       run: |
-        conda create -n build-env python=3.11 -y
-        source "$(conda info --base)/etc/profile.d/conda.sh"
-        conda activate build-env
+        @echo on
+        %CONDA_PATH%\conda create -n build-env python=3.11 -y
+        %CONDA_PATH%\call activate build-env
 
   build_wheels:
     name: Build Wheel
@@ -42,51 +51,42 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-update-conda: true
-        python-version: "3.11"
-        channels: conda-forge,defaults
-        channel-priority: strict
-
-    - name: Initialize conda
-      shell: bash
-      run: |
-        eval "$(conda shell.bash hook)"
-
     - name: Activate conda environment
-      shell: bash
+      shell: cmd
       run: |
-        source "$(conda info --base)/etc/profile.d/conda.sh"
-        conda activate build-env
+        @echo on
+        %CONDA_PATH%\call activate build-env
 
     - name: Install Conda dependencies
-      shell: bash
+      shell: cmd
       run: |
-        conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+        @echo on
+        %CONDA_PATH%\conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
     - name: Verify RocksDB installation
-      shell: bash
+      shell: cmd
       run: |
-        dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib
+        @echo on
+        dir %CONDA_PREFIX%\Library\include\rocksdb && dir %CONDA_PREFIX%\Library\lib\rocksdb.lib
 
     - name: Build wheel
-      shell: bash
+      shell: cmd
       env:
-        INCLUDE: "%CONDA_PREFIX%/Library/include;%INCLUDE%"
-        LIB: "%CONDA_PREFIX%/Library/lib;%LIB%"
-        CFLAGS: "-I%CONDA_PREFIX%/Library/include /D_WIN32_WINNT=0x0601"
-        CXXFLAGS: "-I%CONDA_PREFIX%/Library/include /EHsc /D_WIN32_WINNT=0x0601"
+        INCLUDE: "%CONDA_PREFIX%\Library\include;%INCLUDE%"
+        LIB: "%CONDA_PREFIX%\Library\lib;%LIB%"
+        CFLAGS: "-I%CONDA_PREFIX%\Library\include /D_WIN32_WINNT=0x0601"
+        CXXFLAGS: "-I%CONDA_PREFIX%\Library\include /EHsc /D_WIN32_WINNT=0x0601"
       run: |
-        conda run -n build-env python setup.py build_ext --inplace
-        conda run -n build-env python setup.py bdist_wheel
+        @echo on
+        %CONDA_PATH%\conda run -n build-env python setup.py build_ext --inplace
+        %CONDA_PATH%\conda run -n build-env python setup.py bdist_wheel
 
     - name: Repair wheel (if needed)
-      shell: bash
+      shell: cmd
       run: |
+        @echo on
         pip install delvewheel
-        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin
+        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%\Library\bin
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
