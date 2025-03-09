@@ -1,134 +1,72 @@
-# Python-RocksDB Wheel Builder 🐍🔨
+# python-rocksdb Windows Build
 
-*Created by EJ 🎉*
+[![Windows Build Status](https://img.shields.io/badge/Windows-Build-informational)](https://github.com/yourusername/python-rocksdb/actions)
+![Python Versions](https://img.shields.io/badge/Python-3.8|3.9|3.10|3.11|3.12-blue)
 
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Ready-blue?logo=githubactions)
+*Created and maintained by EJ*
 
-## 📄 Table of Contents
-- [💡 Overview](#-overview)
-- [🚀 Features](#-features)
-- [🛠️ Installation](#️-installation)
-- [🖥️ Usage](#️-usage)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
+## Installation
 
-## 💡 Overview
-Automate building Python C++ extensions for **python-rocksdb** using GitHub Actions! This project simplifies creating cross-platform wheel files (`*.whl`) without local setup hassles. Perfect for Windows developers looking for CI/CD-powered builds.
+### From PyPI
+\```bash
+pip install python-rocksdb
+\```
 
-## 🚀 Features
-- ✔️ **Cross-Platform**: Build Windows wheels via GitHub Actions
-- ✔️ **CI/CD Integration**: Automated workflows on push/pull requests
-- ✔️ **Wheel Build**: Ready-to-install `.whl` files
-- ✔️ **Simple Setup**: Just push code → GitHub handles the rest
-- ✔️ **Customizable**: Easily adapt the workflow for your needs
+### From Source
+\```bash
+git clone https://github.com/yourusername/python-rocksdb.git
+cd python-rocksdb
+conda env create -f conda-environment.yml
+conda activate rocksdb-build
+python setup.py install
+\```
 
-## 🛠️ Installation
+## Basic Usage
+\```python
+import rocksdb
 
-### Requirements
-- GitHub Account
-- Python 3.10+ (tested with 3.10)
-- Visual Studio Build Tools (for C++ extensions)
+# Create database
+db = rocksdb.DB("test.db", rocksdb.Options(create_if_missing=True))
 
-# Python-RocksDB Wheel Builder 🐍🔨
+# Insert data
+db.put(b"key1", b"value1")
 
-*Created by EJ 🎉*
+# Retrieve data
+print(db.get(b"key1"))  # Output: b'value1'
+\```
 
-## 🛠️ Installation
+## Project Structure
+\```
+.
+├── .github/
+│   └── workflows/
+│       └── build_windows_wheels.yml
+├── rocksdb/
+│   ├── __init__.py
+│   ├── _rocksdb.pyx
+│   └── rocksdb.pxd
+├── tests/
+│   ├── __init__.py
+│   └── test_basic.py
+├── LICENSE
+├── MANIFEST.in
+├── README.md
+├── setup.cfg
+└── setup.py
+\```
 
-### Requirements
-- GitHub Account
-- Python 3.10+
-- Visual Studio Build Tools (for C++ extensions)
+## Development
+\```bash
+# Run tests
+pytest tests/
 
-### Setting Up GitHub Actions
+# Build wheel
+python setup.py bdist_wheel
+\```
 
-1. **Fork/Clone the Repository**  
-   ```bash
-   git clone https://github.com/EJyoungc/python-rocksdb.git
-   ```
-
-2. **Add `requirements.txt`**  
-   Create `requirements.txt` with:  
-   ```txt
-   cython
-   rocksdb
-   setuptools
-   wheel
-   ```
-
-3. **Create GitHub Actions Workflow**  
-   Add `.github/workflows/build.yml` with:  
-   ```yaml
-   name: Build Python-RocksDB Wheel
-   on: [push, pull_request]
-   jobs:
-     build:
-       runs-on: windows-2019
-       steps:
-         - name: Checkout Repository
-           uses: actions/checkout@v4
-         - name: Set up Python
-           uses: actions/setup-python@v5
-           with:
-             python-version: '3.10'
-         - name: Install Visual Studio Build Tools
-           run: |
-             choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
-           shell: powershell
-         - name: Install Dependencies
-           run: |
-             python -m pip install --upgrade pip setuptools wheel
-             python -m pip install -r requirements.txt
-         - name: Build the Wheel
-           run: python setup.py bdist_wheel
-         - name: Upload the Wheel Artifact
-           uses: actions/upload-artifact@v4
-           with:
-             name: windows-wheel
-             path: dist/*.whl
-   ```
-
-4. **Commit and Push Changes**  
-   ```bash
-   git add .
-   git commit -m "Add workflow and dependencies"
-   git push origin main
-   ```
+## Credits
+*This entire project was created by EJ with special attention to Windows compatibility and build automation.*
 
 ---
 
-## 🖥️ Usage
-
-1. **Trigger the Build**  
-   Push code to GitHub. The workflow runs automatically.
-
-2. **Download the Wheel**  
-   After the build completes, download the `.whl` file from the **Actions** tab > Artifacts.
-
-3. **Install the Wheel**  
-   ```bash
-   pip install path/to/wheel.whl
-   ```
-
----
-
-## 🤝 Contributing
-
-1. **Fork the repository**.  
-2. **Create a branch**:  
-   ```bash
-   git checkout -b my-feature
-   ```  
-3. **Commit changes**:  
-   ```bash
-   git commit -am 'Add new feature'
-   ```  
-4. **Push and create a PR**:  
-   ```bash
-   git push origin my-feature
-   ```
-
----
-
-## 📜 License  
-MIT License. See [LICENSE](LICENSE).
+**NOTE**: Replace "yourusername" with your actual GitHub username when using this template.
