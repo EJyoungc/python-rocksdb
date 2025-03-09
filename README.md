@@ -1,6 +1,6 @@
 # python-rocksdb Windows Build
 
-[![Windows Build Status](https://img.shields.io/badge/Windows-Build-informational)](https://github.com/yourusername/python-rocksdb/actions)
+[![Windows Build Status](https://img.shields.io/badge/Windows-Build-informational)](https://github.com/EJyoungc/python-rocksdb/actions)
 ![Python Versions](https://img.shields.io/badge/Python-3.8|3.9|3.10|3.11|3.12-blue)
 
 *Created and maintained by EJ*
