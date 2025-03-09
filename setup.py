@@ -18,7 +18,7 @@ if os.name == "nt":
         library_dirs = [r"C:\RocksDB\lib"]
 
     # MSVC uses /std:c++14 (if supported)
-    extra_compile_args = ["-std:c++14"]
+    extra_compile_args = ["/std:c++14"]
     libraries = ["rocksdb"]  # Add other required libraries (e.g. snappy, lz4) if needed
 else:
     # Non-Windows (Linux, macOS) settings
@@ -31,7 +31,7 @@ else:
     # Also check common system locations
     include_dirs.extend(["/usr/local/include", "/usr/include"])
     library_dirs.extend(["/usr/local/lib", "/usr/lib"])
-    extra_compile_args = ['-std=c++11']
+    extra_compile_args = ['/std=c++11']
     libraries = ['rocksdb']
 
 # Define the extension module
