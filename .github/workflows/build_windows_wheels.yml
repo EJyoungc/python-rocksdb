@@ -2,9 +2,9 @@ name: Build Windows Wheels
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build_wheels:
@@ -26,35 +26,53 @@ jobs:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge,defaults
         channel-priority: strict
-        auto-activate-base: false
 
-    - name: Install Conda dependencies (with retry)
-      shell: cmd /C CALL
-      retries: 2
-      continue-on-error: false
+    - name: Add retry script
       run: |
-        conda create -n build-env -y python=${{ matrix.python-version }} || exit 1
-        conda install -n build-env -y --strict-channel-priority ^
-            rocksdb cython setuptools wheel libpython m2w64-toolchain || exit 1
+        mkdir -p scripts
+        echo '#!/bin/bash' > scripts/retry.sh
+        echo '' >> scripts/retry.sh
+        echo 'COMMAND=$1' >> scripts/retry.sh
+        echo 'MAX_RETRIES=${2:-3}' >> scripts/retry.sh
+        echo 'SLEEP_TIME=${3:-5}' >> scripts/retry.sh
+        echo '' >> scripts/retry.sh
+        echo 'for ((i=1; i<=MAX_RETRIES; i++)); do' >> scripts/retry.sh
+        echo '    eval "$COMMAND" && break || {' >> scripts/retry.sh
+        echo '        if [[ $i -lt MAX_RETRIES ]]; then' >> scripts/retry.sh
+        echo '            echo "Command failed. Retrying in $SLEEP_TIME seconds..."' >> scripts/retry.sh
+        echo '            sleep $SLEEP_TIME;' >> scripts/retry.sh
+        echo '        else' >> scripts/retry.sh
+        echo '            echo "Command failed after $i attempts."' >> scripts/retry.sh
+        echo '            exit 1;' >> scripts/retry.sh
+        echo '        fi' >> scripts/retry.sh
+        echo '    }' >> scripts/retry.sh
+        echo 'done' >> scripts/retry.sh
+        chmod +x scripts/retry.sh
 
-    - name: Build wheel (with retry)
-      shell: cmd /C CALL
-      retries: 2
+    - name: Install Conda dependencies
+      shell: bash
+      run: ./scripts/retry.sh "conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain" 3 10
+
+    - name: Verify RocksDB installation
+      shell: bash
+      run: ./scripts/retry.sh "dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib" 3 10
+
+    - name: Build wheel
+      shell: bash
       env:
-        INCLUDE: "%CONDA_PREFIX%\\Library\\include;%INCLUDE%"
-        LIB: "%CONDA_PREFIX%\\Library\\lib;%LIB%"
-        CFLAGS: "-I%CONDA_PREFIX%\\Library\\include /D_WIN32_WINNT=0x0601"
-        CXXFLAGS: "-I%CONDA_PREFIX%\\Library\\include /EHsc /D_WIN32_WINNT=0x0601"
+        INCLUDE: "%CONDA_PREFIX%/Library/include;%INCLUDE%"
+        LIB: "%CONDA_PREFIX%/Library/lib;%LIB%"
+        CFLAGS: "-I%CONDA_PREFIX%/Library/include /D_WIN32_WINNT=0x0601"
+        CXXFLAGS: "-I%CONDA_PREFIX%/Library/include /EHsc /D_WIN32_WINNT=0x0601"
       run: |
-        conda run -n build-env --no-capture-output python setup.py build_ext --inplace || exit 1
-        conda run -n build-env --no-capture-output python setup.py bdist_wheel || exit 1
+        ./scripts/retry.sh "conda run -n build-env python setup.py build_ext --inplace" 3 10
+        ./scripts/retry.sh "conda run -n build-env python setup.py bdist_wheel" 3 10
 
-    - name: Repair wheel
-      shell: cmd /C CALL
+    - name: Repair wheel (if needed)
+      shell: bash
       run: |
-        conda run -n build-env --no-capture-output pip install -q delvewheel
-        conda run -n build-env --no-capture-output delvewheel repair ^
-          dist/*.whl --add-path "%CONDA_PREFIX%\\Library\\bin"
+        ./scripts/retry.sh "pip install delvewheel" 3 10
+        ./scripts/retry.sh "delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin" 3 10
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
