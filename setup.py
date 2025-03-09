@@ -10,7 +10,7 @@ compile_args = ['/std:c++17', '/EHsc', '/D_WIN32_WINNT=0x0601'] if is_windows el
 
 ext = Extension(
     'rocksdb._rocksdb',
-    sources=['rocksdb/_rocksdb.pyx'],
+    sources=['rocksdb/rocksdb.pyx'],
     include_dirs=[
         os.path.join(os.environ.get('CONDA_PREFIX', ''), 'Library/include')
     ],
