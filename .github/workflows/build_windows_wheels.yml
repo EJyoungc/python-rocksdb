@@ -32,23 +32,25 @@ jobs:
         if [ ! -d "scripts" ]; then
           mkdir scripts
         fi
-        echo '#!/bin/bash' > scripts/retry.sh
-        echo '' >> scripts/retry.sh
-        echo 'COMMAND=$1' >> scripts/retry.sh
-        echo 'MAX_RETRIES=${2:-3}' >> scripts/retry.sh
-        echo 'SLEEP_TIME=${3:-5}' >> scripts/retry.sh
-        echo '' >> scripts/retry.sh
-        echo 'for ((i=1; i<=MAX_RETRIES; i++)); do' >> scripts/retry.sh
-        echo '    eval "$COMMAND" && break || {' >> scripts/retry.sh
-        echo '        if [[ $i -lt MAX_RETRIES ]]; then' >> scripts/retry.sh
-        echo '            echo "Command failed. Retrying in $SLEEP_TIME seconds..."' >> scripts/retry.sh
-        echo '            sleep $SLEEP_TIME;' >> scripts/retry.sh
-        echo '        else' >> scripts/retry.sh
-        echo '            echo "Command failed after $i attempts."' >> scripts/retry.sh
-        echo '            exit 1;' >> scripts/retry.sh
-        echo '        fi' >> scripts/retry.sh
-        echo '    }' >> scripts/retry.sh
-        echo 'done' >> scripts/retry.sh
+        cat << 'EOF' > scripts/retry.sh
+        #!/bin/bash
+        COMMAND=$1
+        MAX_RETRIES=${2:-3}
+        SLEEP_TIME=${3:-5}
+
+        for ((i=1; i<=MAX_RETRIES; i++)); do
+            echo "Executing command: $COMMAND"
+            eval "$COMMAND" && break || {
+                if [[ $i -lt MAX_RETRIES ]]; then
+                    echo "Command failed. Retrying in $SLEEP_TIME seconds..."
+                    sleep $SLEEP_TIME;
+                else
+                    echo "Command failed after $i attempts."
+                    exit 1;
+                fi
+            }
+        done
+        EOF
         chmod +x scripts/retry.sh
 
     - name: Install Conda dependencies
