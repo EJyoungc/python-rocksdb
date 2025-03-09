@@ -1,32 +1,35 @@
-
 from setuptools import setup, Extension
+from Cython.Build import cythonize
 import os
 
-# Get the conda prefix (if you are using a conda environment)
-conda_prefix = os.environ.get("CONDA_PREFIX", "")
+is_windows = os.name == 'nt'
 
-# Set default paths for the RocksDB headers and library.
-# These will usually be inside your conda environment.
-rocksdb_include = os.environ.get("ROCKSDB_INCLUDE_DIR", os.path.join(conda_prefix, "include"))
-rocksdb_lib_dir = os.environ.get("ROCKSDB_LIB_DIR", os.path.join(conda_prefix, "lib"))
+libraries = ['rocksdb', 'shlwapi', 'rpcrt4'] if is_windows else ['rocksdb']
+extra_compile_args = ['/std:c++17', '/EHsc', '/D_WIN32_WINNT=0x0601'] if is_windows else ['-std=c++17']
 
-# Define the extension module.
 rocksdb_extension = Extension(
-    "rocksdb",                             # Name of the Python module
-    sources=["src/rocksdb_python.cpp"],    # C++ source file(s)
-    include_dirs=[rocksdb_include],         # Directory for header files
-    library_dirs=[rocksdb_lib_dir],         # Directory for library files
-    libraries=["rocksdb"],                  # Link against the RocksDB library
-    language="c++",
-    extra_compile_args=["-std=c++17"]       # Use C++17 standard
+    'rocksdb._rocksdb',
+    sources=['rocksdb/_rocksdb.pyx'],
+    include_dirs=[
+        os.getenv('INCLUDE_PATH', ''),
+        os.path.join(os.getenv('CONDA_PREFIX', ''), 'Library/include')
+    ],
+    library_dirs=[
+        os.getenv('LIB_PATH', ''),
+        os.path.join(os.getenv('CONDA_PREFIX', ''), 'Library/lib')
+    ],
+    libraries=libraries,
+    language='c++',
+    extra_compile_args=extra_compile_args,
+    # Windows-specific linker flags
+    extra_link_args=['/MANIFEST'] if is_windows else []
 )
 
 setup(
-    name="python-rocksdb",
-    version="0.1.0",
-    description="Python bindings for RocksDB using C++ for windows",
-    author="EJ",
-    author_email="techlink@gmxus",
-    ext_modules=[rocksdb_extension],
-    packages=["python-rocksdb"],  # Your pure Python package folder
+    ext_modules=cythonize(
+        [rocksdb_extension],
+        compiler_directives={'language_level': "3"},
+        force=True  # Ensure rebuild when environment changes
+    ),
+    # ... rest of your setup config
 )
