@@ -2,23 +2,23 @@ name: Build Windows Wheels
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   set_conda_path:
     name: Set Conda Path
     runs-on: windows-latest
     outputs:
-      conda_path: ${{ steps.set_conda.outputs.path }}
+      conda_path: ${{ steps.set_path.outputs.path }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
-      id: conda
+      id: conda_setup
       with:
         auto-update-conda: true
         python-version: "3.11"
@@ -26,10 +26,11 @@ jobs:
         channel-priority: strict
 
     - name: Set Conda Path
+      id: set_path
       shell: cmd
       run: |
-        echo "CONDA_PATH=$CONDA" >> $GITHUB_ENV
-        echo "path=$CONDA" >> $GITHUB_OUTPUT
+        echo "path=%CONDA%" >> $GITHUB_OUTPUT
+        echo "CONDA_PATH=%CONDA%" >> $GITHUB_ENV
 
   create_conda_env:
     name: Create Conda Environment
@@ -42,9 +43,9 @@ jobs:
     - name: Create conda environment
       shell: cmd
       env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.path }}
+        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
       run: |
-        "%CONDA_PATH%\\conda.exe" create -n build-env python=3.11 -y
+        "%CONDA_PATH%\conda.exe" create -n build-env python=3.11 -y
 
   build_wheels:
     name: Build Wheel
@@ -57,19 +58,19 @@ jobs:
     - name: Install Conda dependencies
       shell: cmd
       env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.path }}
+        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
       run: |
-        "%CONDA_PATH%\\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+        "%CONDA_PATH%\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
     - name: Build wheel
       shell: cmd
       env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.path }}
+        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
         INCLUDE: "%CONDA_PREFIX%\\Library\\include;%INCLUDE%"
         LIB: "%CONDA_PREFIX%\\Library\\lib;%LIB%"
       run: |
-        "%CONDA_PATH%\\conda.exe" run -n build-env python setup.py build_ext --inplace
-        "%CONDA_PATH%\\conda.exe" run -n build-env python setup.py bdist_wheel
+        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py build_ext --inplace
+        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py bdist_wheel
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
