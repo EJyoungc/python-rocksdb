@@ -42,10 +42,8 @@ jobs:
 
     - name: Create conda environment
       shell: cmd
-      env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
       run: |
-        "%CONDA_PATH%\conda.exe" create -n build-env python=3.11 -y
+        "C:\Miniconda3\Scripts\conda.exe" create -n build-env python=3.11 -y
 
   build_wheels:
     name: Build Wheel
@@ -57,20 +55,14 @@ jobs:
 
     - name: Install Conda dependencies
       shell: cmd
-      env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
       run: |
-        "%CONDA_PATH%\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+        "C:\Miniconda3\Scripts\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
     - name: Build wheel
       shell: cmd
-      env:
-        CONDA_PATH: ${{ needs.set_conda_path.outputs.conda_path }}
-        INCLUDE: "%CONDA_PREFIX%\\Library\\include;%INCLUDE%"
-        LIB: "%CONDA_PREFIX%\\Library\\lib;%LIB%"
       run: |
-        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py build_ext --inplace
-        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py bdist_wheel
+        "C:\Miniconda3\Scripts\conda.exe" run -n build-env python setup.py build_ext --inplace
+        "C:\Miniconda3\Scripts\conda.exe" run -n build-env python setup.py bdist_wheel
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
