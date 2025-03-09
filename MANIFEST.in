@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+include requirements.txt
+include rocksdb/*.pxd  # Ensure Cython headers are included
