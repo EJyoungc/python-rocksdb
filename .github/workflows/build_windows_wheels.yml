@@ -25,8 +25,7 @@ jobs:
     - name: Set Conda Path
       shell: cmd
       run: |
-        @echo on
-        set "CONDA_PATH=%CONDA%"
+        echo "CONDA_PATH=$CONDA" >> $GITHUB_ENV
 
   create_conda_env:
     name: Create Conda Environment
@@ -36,12 +35,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create and activate conda environment
+    - name: Create conda environment
       shell: cmd
+      env:
+        CONDA_PATH: ${{ env.CONDA_PATH }}
       run: |
-        @echo on
-        %CONDA_PATH%\conda create -n build-env python=3.11 -y
-        %CONDA_PATH%\call activate build-env
+        "%CONDA_PATH%\conda.exe" create -n build-env python=3.11 -y
 
   build_wheels:
     name: Build Wheel
@@ -51,42 +50,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Activate conda environment
-      shell: cmd
-      run: |
-        @echo on
-        %CONDA_PATH%\call activate build-env
-
     - name: Install Conda dependencies
       shell: cmd
+      env:
+        CONDA_PATH: ${{ env.CONDA_PATH }}
       run: |
-        @echo on
-        %CONDA_PATH%\conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
-
-    - name: Verify RocksDB installation
-      shell: cmd
-      run: |
-        @echo on
-        dir %CONDA_PREFIX%\Library\include\rocksdb && dir %CONDA_PREFIX%\Library\lib\rocksdb.lib
+        "%CONDA_PATH%\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
     - name: Build wheel
       shell: cmd
       env:
+        CONDA_PATH: ${{ env.CONDA_PATH }}
         INCLUDE: "%CONDA_PREFIX%\Library\include;%INCLUDE%"
         LIB: "%CONDA_PREFIX%\Library\lib;%LIB%"
-        CFLAGS: "-I%CONDA_PREFIX%\Library\include /D_WIN32_WINNT=0x0601"
-        CXXFLAGS: "-I%CONDA_PREFIX%\Library\include /EHsc /D_WIN32_WINNT=0x0601"
       run: |
-        @echo on
-        %CONDA_PATH%\conda run -n build-env python setup.py build_ext --inplace
-        %CONDA_PATH%\conda run -n build-env python setup.py bdist_wheel
-
-    - name: Repair wheel (if needed)
-      shell: cmd
-      run: |
-        @echo on
-        pip install delvewheel
-        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%\Library\bin
+        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py build_ext --inplace
+        "%CONDA_PATH%\conda.exe" run -n build-env python setup.py bdist_wheel
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
