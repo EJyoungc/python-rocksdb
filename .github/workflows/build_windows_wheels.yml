@@ -7,68 +7,37 @@ on:
     branches: [main]
 
 jobs:
-  set_conda_path:
-    name: Set Conda Path
-    runs-on: windows-latest
-    outputs:
-      conda_path: ${{ steps.set_path.outputs.conda_path }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      id: conda_setup
-      with:
-        auto-update-conda: true
-        python-version: "3.11"
-        channels: conda-forge,defaults
-        channel-priority: strict
-
-    - name: Set Conda Path
-      id: set_path
-      shell: cmd
-      run: |
-        echo "path=%CONDA%" >> $GITHUB_OUTPUT
-        echo "CONDA_PATH=%CONDA%" >> $GITHUB_ENV
-
-  create_conda_env:
-    name: Create Conda Environment
-    runs-on: windows-latest
-    needs: set_conda_path
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Create conda environment
-      shell: cmd
-      run: |
-        "C:\Miniconda3\Scripts\conda.exe" create -n build-env python=3.11 -y
-
   build_wheels:
-    name: Build Wheel
+    name: Build Wheels
     runs-on: windows-latest
-    needs: create_conda_env
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install Conda dependencies
-      shell: cmd
-      run: |
-        "C:\Miniconda3\Scripts\conda.exe" install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: "3.11"
+          channels: conda-forge,defaults
+          channel-priority: strict
 
-    - name: Build wheel
-      shell: cmd
-      run: |
-        "C:\Miniconda3\Scripts\conda.exe" run -n build-env python setup.py build_ext --inplace
-        "C:\Miniconda3\Scripts\conda.exe" run -n build-env python setup.py bdist_wheel
+      - name: Create conda environment
+        run: conda create -n build-env python=3.11 -y
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: rocksdb-wheels
-        path: |
-          dist/*.whl
-          wheelhouse/*.whl
-        retention-days: 3
+      - name: Install Conda dependencies
+        run: conda install -n build-env -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+
+      - name: Build wheel
+        run: |
+          conda run -n build-env python setup.py build_ext --inplace
+          conda run -n build-env python setup.py bdist_wheel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-wheels
+          path: |
+            dist/*.whl
+            wheelhouse/*.whl
+          retention-days: 3
