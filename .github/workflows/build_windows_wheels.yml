@@ -1,0 +1,65 @@
+name: Build Windows Wheels
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_wheels:
+    name: Build Wheel
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge,defaults
+        channel-priority: strict
+
+    - name: Install Conda dependencies
+      shell: cmd /C CALL
+      run: |
+        conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
+
+    - name: Verify RocksDB installation
+      shell: cmd /C CALL
+      run: |
+        dir %CONDA_PREFIX%\Library\include\rocksdb
+        dir %CONDA_PREFIX%\Library\lib\rocksdb.lib
+
+    - name: Build wheel
+      shell: cmd /C CALL
+      env:
+        INCLUDE: "%CONDA_PREFIX%\Library\include;%INCLUDE%"
+        LIB: "%CONDA_PREFIX%\Library\lib;%LIB%"
+        # Windows requires different compiler flags
+        CFLAGS: "-I%CONDA_PREFIX%\Library\include /D_WIN32_WINNT=0x0601"
+        CXXFLAGS: "-I%CONDA_PREFIX%\Library\include /EHsc /D_WIN32_WINNT=0x0601"
+      run: |
+        python setup.py build_ext --inplace
+        python setup.py bdist_wheel
+
+    - name: Repair wheel (if needed)
+      shell: cmd /C CALL
+      run: |
+        pip install delvewheel
+        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%\Library\bin
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rocksdb-wheels
+        path: |
+          dist/*.whl
+          wheelhouse/*.whl
+        retention-days: 3
