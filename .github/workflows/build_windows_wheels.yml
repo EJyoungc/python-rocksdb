@@ -43,7 +43,7 @@ jobs:
           python -m cython rocksdb/rocksdb.pyx  # Ensure rocksdb.cpp is created
       - name: Check if rocksdb.cpp exists
         run: |
-          dir rocksdb/rocksdb.cpp
+          dir rocksdb
 
 
       
