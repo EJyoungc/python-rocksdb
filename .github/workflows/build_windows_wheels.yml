@@ -11,7 +11,7 @@ jobs:
     name: Set Conda Path
     runs-on: windows-latest
     outputs:
-      conda_path: ${{ steps.set_path.outputs.path }}
+      conda_path: ${{ steps.set_path.outputs.conda_path }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
