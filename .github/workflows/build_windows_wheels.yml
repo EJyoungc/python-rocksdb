@@ -65,8 +65,8 @@ jobs:
       shell: cmd
       env:
         CONDA_PATH: ${{ needs.set_conda_path.outputs.path }}
-        INCLUDE: "%CONDA_PREFIX%\Library\include;%INCLUDE%"
-        LIB: "%CONDA_PREFIX%\Library\lib;%LIB%"
+        INCLUDE: "%CONDA_PREFIX%\\Library\\include;%INCLUDE%"
+        LIB: "%CONDA_PREFIX%\\Library\\lib;%LIB%"
       run: |
         "%CONDA_PATH%\conda.exe" run -n build-env python setup.py build_ext --inplace
         "%CONDA_PATH%\conda.exe" run -n build-env python setup.py bdist_wheel
