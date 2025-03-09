@@ -4,16 +4,21 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
+
+      - name: Install Visual Studio Build Tools
+        run: |
+          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+        shell: powershell
 
       - name: Install Dependencies
         run: |
@@ -24,7 +29,7 @@ jobs:
         run: python setup.py bdist_wheel
 
       - name: Upload the Wheel Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-wheel
           path: dist/*.whl
