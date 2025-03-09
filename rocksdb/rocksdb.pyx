@@ -1,5 +1,8 @@
-# Your Cython code interacting with RocksDB C++ API
 cdef extern from "rocksdb/c.h":
-    # C API declarations
+    ctypedef struct rocksdb_t:
+        pass
 
-# Python interface implementation
+    ctypedef struct rocksdb_options_t:
+        pass
+
+    rocksdb_t* rocksdb_open(const rocksdb_options_t* options, const char* name, char** errptr)
