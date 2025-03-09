@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - name: Checkout code
@@ -29,7 +29,9 @@ jobs:
 
     - name: Add retry script
       run: |
-        mkdir -p scripts
+        if [ ! -d "scripts" ]; then
+          mkdir scripts
+        fi
         echo '#!/bin/bash' > scripts/retry.sh
         echo '' >> scripts/retry.sh
         echo 'COMMAND=$1' >> scripts/retry.sh
