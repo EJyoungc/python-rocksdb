@@ -34,6 +34,9 @@ jobs:
           pip install cython  # Redundant but ensures it's available
           # python -m cython
           # python cython --version
+          
+      - name: Change directory to project root
+        run: cd ${{ github.workspace }}  # Ensures you're in the project directory
         
       - name: Generate C++ Files
         run: |
