@@ -36,7 +36,7 @@ else:
 
 # Define the extension module
 ext = Extension(
-    "rocksdb._rocksdb",
+    "rocksdb.rocksdb",
     sources=["rocksdb/_rocksdb.pyx", "rocksdb/rocksdb.cpp"],
     include_dirs=include_dirs,
     library_dirs=library_dirs,
