@@ -1,0 +1,12 @@
+name: rocksdb-build
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - rocksdb
+  - cython
+  - setuptools
+  - wheel
+  - m2w64-toolchain  # Windows compiler toolchain
+  - libpython
