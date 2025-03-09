@@ -37,14 +37,19 @@ else:
 # Define the extension module
 ext = Extension(
     "rocksdb._rocksdb",
-    sources=["rocksdb/_rocksdb.pyx", "rocksdb/_rocksdb.cpp"],
+    sources=["rocksdb/_rocksdb.pyx", "rocksdb/rocksdb.cpp"],
     include_dirs=include_dirs,
     library_dirs=library_dirs,
     libraries=libraries,
     extra_compile_args=extra_compile_args,
 )
 
-ext_modules = cythonize([ext], compiler_directives={'language_level': "3"})
+# Only use cythonize if the .pyx file exists.
+if os.path.exists("rocksdb/rocksdb.pyx"):
+    ext_modules = cythonize([ext], compiler_directives={'language_level': "3"})
+else:
+    ext_modules = [ext]
+
 
 # Optionally load long description from README.md
 long_description = ""
