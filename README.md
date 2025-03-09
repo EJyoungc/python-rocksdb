@@ -1,44 +1,134 @@
-# 🎉 **Project Title: Python-RocksDB Wheel Builder**
+# Python-RocksDB Wheel Builder 🐍🔨
 
-## 📄 **Table of Contents**
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-  - [Requirements](#requirements)
-  - [Setting Up GitHub Actions](#setting-up-github-actions)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+*Created by EJ 🎉*
 
----
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Ready-blue?logo=githubactions)
 
-## 💡 **Overview**
-The **Python-RocksDB Wheel Builder** project automates the process of building a Python C++ extension for `python-rocksdb` using GitHub Actions. This provides an easy way to create cross-platform wheel files for `python-rocksdb`, without worrying about local setup or dependencies.
+## 📄 Table of Contents
+- [💡 Overview](#-overview)
+- [🚀 Features](#-features)
+- [🛠️ Installation](#️-installation)
+- [🖥️ Usage](#️-usage)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
----
+## 💡 Overview
+Automate building Python C++ extensions for **python-rocksdb** using GitHub Actions! This project simplifies creating cross-platform wheel files (`*.whl`) without local setup hassles. Perfect for Windows developers looking for CI/CD-powered builds.
 
-## 🚀 **Features**
-- ✔️ **Cross-Platform**: Supports building on Windows using GitHub Actions
-- ✔️ **CI/CD Integration**: Automates the process using GitHub Actions for smooth builds
-- ✔️ **Wheel Build**: Builds `.whl` file ready for installation
-- ✔️ **Simple Setup**: Just push your code to GitHub, and the process runs automatically
-- ✔️ **Easily Customizable**: Modify the workflow to suit your project's specific needs
+## 🚀 Features
+- ✔️ **Cross-Platform**: Build Windows wheels via GitHub Actions
+- ✔️ **CI/CD Integration**: Automated workflows on push/pull requests
+- ✔️ **Wheel Build**: Ready-to-install `.whl` files
+- ✔️ **Simple Setup**: Just push code → GitHub handles the rest
+- ✔️ **Customizable**: Easily adapt the workflow for your needs
 
----
+## 🛠️ Installation
 
-## 🛠️ **Installation**
+### Requirements
+- GitHub Account
+- Python 3.10+ (tested with 3.10)
+- Visual Studio Build Tools (for C++ extensions)
 
-### **Requirements**
-1. **GitHub Account**: You need a GitHub account to store and manage your code.
-2. **Python**: Python 3.10 (or any compatible version).
-3. **Visual Studio Build Tools**: The necessary tools to build Python C++ extensions on Windows.
+# Python-RocksDB Wheel Builder 🐍🔨
 
-### **Setting Up GitHub Actions**
-1. **Fork or Clone this Repository**: Clone the repository to your local machine or fork it to your GitHub account.
-2. **Add `requirements.txt`**: This file contains the necessary dependencies for the project. Here’s the content:
-   
+*Created by EJ 🎉*
+
+## 🛠️ Installation
+
+### Requirements
+- GitHub Account
+- Python 3.10+
+- Visual Studio Build Tools (for C++ extensions)
+
+### Setting Up GitHub Actions
+
+1. **Fork/Clone the Repository**  
+   ```bash
+   git clone https://github.com/your-username/python-rocksdb-wheel-builder.git
+   ```
+
+2. **Add `requirements.txt`**  
+   Create `requirements.txt` with:  
    ```txt
    cython
    rocksdb
    setuptools
    wheel
+   ```
+
+3. **Create GitHub Actions Workflow**  
+   Add `.github/workflows/build.yml` with:  
+   ```yaml
+   name: Build Python-RocksDB Wheel
+   on: [push, pull_request]
+   jobs:
+     build:
+       runs-on: windows-2019
+       steps:
+         - name: Checkout Repository
+           uses: actions/checkout@v4
+         - name: Set up Python
+           uses: actions/setup-python@v5
+           with:
+             python-version: '3.10'
+         - name: Install Visual Studio Build Tools
+           run: |
+             choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+           shell: powershell
+         - name: Install Dependencies
+           run: |
+             python -m pip install --upgrade pip setuptools wheel
+             python -m pip install -r requirements.txt
+         - name: Build the Wheel
+           run: python setup.py bdist_wheel
+         - name: Upload the Wheel Artifact
+           uses: actions/upload-artifact@v4
+           with:
+             name: windows-wheel
+             path: dist/*.whl
+   ```
+
+4. **Commit and Push Changes**  
+   ```bash
+   git add .
+   git commit -m "Add workflow and dependencies"
+   git push origin main
+   ```
+
+---
+
+## 🖥️ Usage
+
+1. **Trigger the Build**  
+   Push code to GitHub. The workflow runs automatically.
+
+2. **Download the Wheel**  
+   After the build completes, download the `.whl` file from the **Actions** tab > Artifacts.
+
+3. **Install the Wheel**  
+   ```bash
+   pip install path/to/wheel.whl
+   ```
+
+---
+
+## 🤝 Contributing
+
+1. **Fork the repository**.  
+2. **Create a branch**:  
+   ```bash
+   git checkout -b my-feature
+   ```  
+3. **Commit changes**:  
+   ```bash
+   git commit -am 'Add new feature'
+   ```  
+4. **Push and create a PR**:  
+   ```bash
+   git push origin my-feature
+   ```
+
+---
+
+## 📜 License  
+MIT License. See [LICENSE](LICENSE).
