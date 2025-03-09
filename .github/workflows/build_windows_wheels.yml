@@ -44,9 +44,8 @@ jobs:
       - name: Check if rocksdb.cpp exists
         run: |
           dir rocksdb
+          mv rocksdb/rocksdb.c rocksdb/rocksdb.cpp
 
-
-      
 
       - name: Build wheel
         run: |
