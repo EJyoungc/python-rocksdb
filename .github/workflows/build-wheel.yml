@@ -1,35 +1,65 @@
-name: Build Python-RocksDB Wheel
+name: Build Windows Wheels
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
-    runs-on: windows-2019
+  build_wheels:
+    name: Build Wheel
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge,defaults
+        channel-priority: strict
 
-      - name: Install Visual Studio Build Tools
-        run: |
-          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
-        shell: powershell
+    - name: Install Conda dependencies
+      shell: cmd /C CALL
+      run: |
+        conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -r requirements.txt
+    - name: Verify RocksDB installation
+      shell: cmd /C CALL
+      run: |
+        dir %CONDA_PREFIX%\Library\include\rocksdb
+        dir %CONDA_PREFIX%\Library\lib\rocksdb.lib
 
-      - name: Build the Wheel
-        run: python setup.py bdist_wheel
+    - name: Build wheel
+      shell: cmd /C CALL
+      env:
+        INCLUDE: "%CONDA_PREFIX%\Library\include;%INCLUDE%"
+        LIB: "%CONDA_PREFIX%\Library\lib;%LIB%"
+        # Windows requires different compiler flags
+        CFLAGS: "-I%CONDA_PREFIX%\Library\include /D_WIN32_WINNT=0x0601"
+        CXXFLAGS: "-I%CONDA_PREFIX%\Library\include /EHsc /D_WIN32_WINNT=0x0601"
+      run: |
+        python setup.py build_ext --inplace
+        python setup.py bdist_wheel
 
-      - name: Upload the Wheel Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-wheel
-          path: dist/*.whl
+    - name: Repair wheel (if needed)
+      shell: cmd /C CALL
+      run: |
+        pip install delvewheel
+        delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%\Library\bin
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rocksdb-wheels
+        path: |
+          dist/*.whl
+          wheelhouse/*.whl
+        retention-days: 3
