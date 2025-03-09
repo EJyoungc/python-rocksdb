@@ -35,43 +35,38 @@ jobs:
       shell: bash
       run: |
         conda create -n build-env python=${{ matrix.python-version }} -y
-        echo "conda activate build-env" >> $GITHUB_ENV
+        echo "source activate build-env" >> $GITHUB_ENV
         source $GITHUB_ENV
-
-    - name: Add retry script
-      shell: bash
-      run: |
-        if [ ! -d "scripts" ]; then
-          mkdir scripts
-        fi
-        cat << 'EOF' > scripts/retry.sh
-        #!/bin/bash
-        COMMAND=$1
-        MAX_RETRIES=${2:-3}
-        SLEEP_TIME=${3:-5}
-
-        for ((i=1; i<=MAX_RETRIES; i++)); do
-            echo "Executing command: $COMMAND"
-            eval "$COMMAND" && break || {
-                if [[ $i -lt MAX_RETRIES ]]; then
-                    echo "Command failed. Retrying in $SLEEP_TIME seconds..."
-                    sleep $SLEEP_TIME;
-                else
-                    echo "Command failed after $i attempts."
-                    exit 1;
-                fi
-            }
-        done
-        EOF
-        chmod +x scripts/retry.sh
 
     - name: Install Conda dependencies
       shell: bash
-      run: ./scripts/retry.sh "conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain" 3 10
+      run: |
+        for ((i=1; i<=3; i++)); do
+          conda install -y rocksdb cython setuptools wheel libpython m2w64-toolchain && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
 
     - name: Verify RocksDB installation
       shell: bash
-      run: ./scripts/retry.sh "dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib" 3 10
+      run: |
+        for ((i=1; i<=3; i++)); do
+          dir %CONDA_PREFIX%/Library/include/rocksdb && dir %CONDA_PREFIX%/Library/lib/rocksdb.lib && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
 
     - name: Build wheel
       shell: bash
@@ -81,14 +76,54 @@ jobs:
         CFLAGS: "-I%CONDA_PREFIX%/Library/include /D_WIN32_WINNT=0x0601"
         CXXFLAGS: "-I%CONDA_PREFIX%/Library/include /EHsc /D_WIN32_WINNT=0x0601"
       run: |
-        ./scripts/retry.sh "conda run -n build-env python setup.py build_ext --inplace" 3 10
-        ./scripts/retry.sh "conda run -n build-env python setup.py bdist_wheel" 3 10
+        for ((i=1; i<=3; i++)); do
+          conda run -n build-env python setup.py build_ext --inplace && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
+        for ((i=1; i<=3; i++)); do
+          conda run -n build-env python setup.py bdist_wheel && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
 
     - name: Repair wheel (if needed)
       shell: bash
       run: |
-        ./scripts/retry.sh "pip install delvewheel" 3 10
-        ./scripts/retry.sh "delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin" 3 10
+        for ((i=1; i<=3; i++)); do
+          pip install delvewheel && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
+        for ((i=1; i<=3; i++)); do
+          delvewheel repair dist/*.whl --add-path %CONDA_PREFIX%/Library/bin && break || {
+            if [[ $i -lt 3 ]]; then
+              echo "Command failed. Retrying in 10 seconds..."
+              sleep 10;
+            else
+              echo "Command failed after $i attempts."
+              exit 1;
+            fi
+          }
+        done
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
