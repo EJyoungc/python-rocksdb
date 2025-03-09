@@ -24,9 +24,9 @@ rocksdb_extension = Extension(
 setup(
     name="python-rocksdb",
     version="0.1.0",
-    description="Python bindings for RocksDB using C++",
-    author="Your Name",
-    author_email="your.email@example.com",
+    description="Python bindings for RocksDB using C++ for windows",
+    author="EJ",
+    author_email="techlink@gmxus",
     ext_modules=[rocksdb_extension],
-    packages=["my_rocksdb"],  # Your pure Python package folder
+    packages=["python-rocksdb"],  # Your pure Python package folder
 )
