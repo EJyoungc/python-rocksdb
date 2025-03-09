@@ -44,7 +44,7 @@ Automate building Python C++ extensions for **python-rocksdb** using GitHub Acti
 
 1. **Fork/Clone the Repository**  
    ```bash
-   git clone https://github.com/your-username/python-rocksdb-wheel-builder.git
+   git clone [https://github.com/EJyoungc/python-rocksdb-wheel-builder.git](https://github.com/EJyoungc/python-rocksdb.git)
    ```
 
 2. **Add `requirements.txt`**  
